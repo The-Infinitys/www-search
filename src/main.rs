@@ -9,7 +9,7 @@ use tokio; // async/awaitのためにtokioを使用
 /// この関数は、`www_search`関数を使用してGoogleとBingの検索を実行し、結果を出力します。
 #[tokio::main]
 async fn main() {
-    let query = "Rust web framework";
+    let query = "Rustとは";
 
     println!("--- WWW Search Library Example ---");
 
