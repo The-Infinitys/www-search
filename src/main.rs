@@ -2,7 +2,7 @@
 
 // lib.rsから必要な要素をインポート
 use www_search::{www_search, EngineType};
-use tokio; // async/awaitのためにtokioを使用
+ // async/awaitのためにtokioを使用
 
 /// メイン関数
 ///

@@ -5,7 +5,7 @@ use std::fs;
 use crate::SearchData; // lib.rsからSearchData構造体をインポート
 use reqwest; // HTTPクライアントのreqwestをインポート
 use scraper::{ElementRef, Html, Selector}; // HTMLパース用のscraperクレートをインポート
-use url::Url; // URL解析のためにurlクレートをインポート
+ // URL解析のためにurlクレートをインポート
 use urlencoding; // URLエンコーディングのためにurlencodingをインポート
 
 /// Google検索を実行し、生のHTMLコンテンツを取得し、それを指定された基準でパースします。
@@ -189,7 +189,7 @@ fn parse_data(html_str: String) -> Vec<SearchData> {
             search_results.push(SearchData {
                 title: t,
                 url: u,
-                description: description.unwrap_or_else(|| "".to_string()),
+                description: description.unwrap_or_default(),
             });
         }
     }
