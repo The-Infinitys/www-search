@@ -24,7 +24,6 @@ pub async fn search_google(query: String) -> Result<Vec<SearchData>, String> {
         urlencoding::encode(&query)
     );
 
-    println!("Fetching HTML from: {}", url); // 取得するURLを表示
 
     // reqwest::Clientを使用し、クッキーとリダイレクトを有効化
     let client = match reqwest::ClientBuilder::new()
