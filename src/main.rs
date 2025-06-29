@@ -65,7 +65,13 @@ async fn main() {
                 return;
             }
             for (i, result) in results.iter().enumerate() {
-                println!("[{}] {}\n    {}\n    {}\n---", i + 1, result.title, result.url, result.description);
+                println!(
+                    "[{}] {}\n    {}\n    {}\n---",
+                    i + 1,
+                    result.title,
+                    result.url,
+                    result.description
+                );
             }
             print!("\nSelect result number to browse (or Enter to skip): ");
             std::io::stdout().flush().unwrap();

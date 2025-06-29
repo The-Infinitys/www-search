@@ -24,7 +24,6 @@ pub async fn search_google(query: String) -> Result<Vec<SearchData>, String> {
         urlencoding::encode(&query)
     );
 
-
     // reqwest::Clientを使用し、クッキーとリダイレクトを有効化
     let client = match reqwest::ClientBuilder::new()
         .cookie_store(true)

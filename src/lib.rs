@@ -5,8 +5,8 @@
 //! このライブラリは、Google, Bing, DuckDuckGoなどの様々な検索エンジンを使用して、ネット検索を行うことができます。
 
 // searchモジュールを宣言し、その中の関数や型を公開する
-pub mod search;
 pub mod browse;
+pub mod search;
 use crate::search::{duckduckgo, google};
 
 /// 検索エンジンの種類を定義するEnum
