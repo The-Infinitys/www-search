@@ -1,6 +1,7 @@
 // src/search/duckduckgo.rs
 
 use reqwest;
+use reqwest::blocking;
 use scraper::{Html, Selector};
 use std::str::FromStr;
 
@@ -61,6 +62,78 @@ pub async fn search_duckduckgo(query: String) -> Result<Vec<SearchData>, String>
             href.to_string()
         };
         // description: aの親td→親tr→次の兄弟trのtd.result-snippet
+        let mut description = String::new();
+        if let Some(parent_td) = a.parent().and_then(scraper::ElementRef::wrap) {
+            if let Some(parent_tr) = parent_td.parent().and_then(scraper::ElementRef::wrap) {
+                let mut next_tr = parent_tr.next_sibling();
+                while let Some(node) = next_tr {
+                    if let Some(tr_elem) = scraper::ElementRef::wrap(node) {
+                        let td_selector = Selector::parse("td.result-snippet").unwrap();
+                        if let Some(snippet_td) = tr_elem.select(&td_selector).next() {
+                            description = snippet_td
+                                .text()
+                                .collect::<Vec<_>>()
+                                .join("")
+                                .trim()
+                                .to_string();
+                            break;
+                        }
+                    }
+                    next_tr = node.next_sibling();
+                }
+            }
+        }
+        if !title.is_empty() && !url.is_empty() {
+            results.push(SearchData {
+                title,
+                url,
+                description,
+            });
+        }
+    }
+    Ok(results)
+}
+
+/// DuckDuckGo検索を同期で実行する関数
+pub fn search_duckduckgo_sync(query: String) -> Result<Vec<SearchData>, String> {
+    let url = format!(
+        "https://lite.duckduckgo.com/lite/?q={}",
+        urlencoding::encode(&query)
+    );
+    let client = match blocking::ClientBuilder::new()
+        .user_agent("w3m (w3m/0.5.3+git20230121)")
+        .build()
+    {
+        Ok(c) => c,
+        Err(e) => return Err(format!("Failed to build reqwest client: {}", e)),
+    };
+    let html = match client.get(&url).send() {
+        Ok(resp) => match resp.text() {
+            Ok(t) => t,
+            Err(e) => return Err(format!("Failed to get text from DuckDuckGo: {}", e)),
+        },
+        Err(e) => return Err(format!("Failed to send request to DuckDuckGo: {}", e)),
+    };
+    let document = Html::parse_document(&html);
+    let mut results = Vec::new();
+    let result_selector = Selector::parse("a.result-link").unwrap();
+    for a in document.select(&result_selector) {
+        let title = a.text().collect::<Vec<_>>().join("").trim().to_string();
+        let href = a.value().attr("href").unwrap_or("");
+        let url = if href.starts_with("//") {
+            let abs = format!("https:{}", href);
+            if let Ok(parsed) = url::Url::from_str(&abs) {
+                parsed
+                    .query_pairs()
+                    .find(|(k, _)| k == "uddg")
+                    .map(|(_, v)| v.into_owned())
+                    .unwrap_or(abs)
+            } else {
+                abs
+            }
+        } else {
+            href.to_string()
+        };
         let mut description = String::new();
         if let Some(parent_td) = a.parent().and_then(scraper::ElementRef::wrap) {
             if let Some(parent_tr) = parent_td.parent().and_then(scraper::ElementRef::wrap) {

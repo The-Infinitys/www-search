@@ -6,7 +6,7 @@
 
 // searchモジュールを宣言し、その中の関数や型を公開する
 pub mod search;
-
+pub mod browse;
 use crate::search::{duckduckgo, google};
 
 /// 検索エンジンの種類を定義するEnum
