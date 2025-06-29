@@ -1,15 +1,26 @@
 // src/main.rs
 
+use std::io::Write;
+
 // lib.rsから必要な要素をインポート
-use www_search::{www_search, EngineType};
- // async/awaitのためにtokioを使用
+use www_search::{EngineType, www_search};
+// async/awaitのためにtokioを使用
 
 /// メイン関数
 ///
 /// この関数は、`www_search`関数を使用してGoogleとBingの検索を実行し、結果を出力します。
 #[tokio::main]
 async fn main() {
-    let query = "アンサイクロペディアとは";
+    let args: Vec<String> = std::env::args().collect();
+    let query = if args.len() > 1 {
+        args[1..].join(" ")
+    } else {
+        let mut s = String::new();
+        print!("query: ");
+        std::io::stdout().flush().unwrap();
+        std::io::stdin().read_line(&mut s).ok();
+        s.trim().parse().ok().unwrap()
+    };
 
     println!("--- WWW Search Library Example ---");
 
@@ -30,25 +41,6 @@ async fn main() {
             }
         }
         Err(e) => eprintln!("Error during Google search: {}", e),
-    }
-
-    // Bing検索を実行
-    println!("\nSearching with Bing for: '{}'", query);
-    match www_search(EngineType::Bing, query.to_string()).await {
-        Ok(results) => {
-            println!("Bing Search Results:");
-            if results.is_empty() {
-                println!("  No results found.");
-            } else {
-                for result in results {
-                    println!("  Title: {}", result.title);
-                    println!("  URL: {}", result.url);
-                    println!("  Description: {}", result.description);
-                    println!("  ---");
-                }
-            }
-        }
-        Err(e) => eprintln!("Error during Bing search: {}", e),
     }
 
     // DuckDuckGo検索を実行
@@ -72,4 +64,3 @@ async fn main() {
 
     println!("\n--- End of Example ---");
 }
-

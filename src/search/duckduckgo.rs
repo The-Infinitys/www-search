@@ -1,9 +1,9 @@
 // src/search/duckduckgo.rs
 
-use std::str::FromStr;
-
 use reqwest;
 use scraper::{Html, Selector};
+use std::fs;
+use std::str::FromStr;
 
 use crate::SearchData; // lib.rsからSearchData構造体をインポート
 
@@ -38,6 +38,13 @@ pub async fn search_duckduckgo(query: String) -> Result<Vec<SearchData>, String>
         },
         Err(e) => return Err(format!("Failed to send request to DuckDuckGo: {}", e)),
     };
+    println!("Successfully fetched HTML from DuckDuckGo (first 500 chars):");
+    println!("{}", &html[0..std::cmp::min(html.len(), 500)]); // HTMLの最初の部分を表示
+    println!("...");
+    // 取得したHTMLをdata.htmlファイルに書き込み
+    if let Err(e) = fs::write("data.html", &html) {
+        eprintln!("Failed to write HTML to data.html: {}", e);
+    }
     // HTMLパース
     let document = Html::parse_document(&html);
     let mut results = Vec::new();
@@ -45,24 +52,45 @@ pub async fn search_duckduckgo(query: String) -> Result<Vec<SearchData>, String>
     let result_selector = Selector::parse("a.result-link").unwrap();
     for a in document.select(&result_selector) {
         let title = a.text().collect::<Vec<_>>().join("").trim().to_string();
-        let url = format!("https:{}", a.value().attr("href").unwrap_or("").to_string());
-        let url = url::Url::from_str(&url).unwrap();
-        let url = url
-            .query_pairs()
-            .find(|(key, _)| key == "uddg")
-            .map(|(_, value)| value.into_owned())
-            .unwrap_or_else(|| url.to_string());
-        // 説明文はaの次の兄弟要素（smallタグ）
+        // URL抽出
+        let href = a.value().attr("href").unwrap_or("");
+        let url = if href.starts_with("//") {
+            let abs = format!("https:{}", href);
+            if let Ok(parsed) = url::Url::from_str(&abs) {
+                parsed
+                    .query_pairs()
+                    .find(|(k, _)| k == "uddg")
+                    .map(|(_, v)| v.into_owned())
+                    .unwrap_or(abs)
+            } else {
+                abs
+            }
+        } else if href.starts_with("http://") || href.starts_with("https://") {
+            href.to_string()
+        } else {
+            href.to_string()
+        };
+        // description: aの親td→親tr→次の兄弟trのtd.result-snippet
         let mut description = String::new();
-        let mut next = a.next_sibling();
-        while let Some(node) = next {
-            if let Some(elem) = scraper::ElementRef::wrap(node) {
-                if elem.value().name() == "small" {
-                    description = elem.text().collect::<Vec<_>>().join("").trim().to_string();
-                    break;
+        if let Some(parent_td) = a.parent().and_then(scraper::ElementRef::wrap) {
+            if let Some(parent_tr) = parent_td.parent().and_then(scraper::ElementRef::wrap) {
+                let mut next_tr = parent_tr.next_sibling();
+                while let Some(node) = next_tr {
+                    if let Some(tr_elem) = scraper::ElementRef::wrap(node) {
+                        let td_selector = Selector::parse("td.result-snippet").unwrap();
+                        if let Some(snippet_td) = tr_elem.select(&td_selector).next() {
+                            description = snippet_td
+                                .text()
+                                .collect::<Vec<_>>()
+                                .join("")
+                                .trim()
+                                .to_string();
+                            break;
+                        }
+                    }
+                    next_tr = node.next_sibling();
                 }
             }
-            next = node.next_sibling();
         }
         if !title.is_empty() && !url.is_empty() {
             results.push(SearchData {

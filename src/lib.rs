@@ -7,21 +7,17 @@
 // searchモジュールを宣言し、その中の関数や型を公開する
 pub mod search;
 
-use crate::search::{
-    google,
-    bing,
-    duckduckgo,
-};
+use crate::search::{duckduckgo, google};
 
 /// 検索エンジンの種類を定義するEnum
 ///
 /// - `Google`: Google検索 (デフォルト)
 /// - `Bing`: Bing検索
 /// - `DuckDuckGo`: DuckDuckGo検索
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub enum EngineType {
+    #[default]
     Google, // default
-    Bing,
     DuckDuckGo,
 }
 
@@ -68,8 +64,8 @@ pub struct SearchData {
 ///         Err(e) => eprintln!("Google 検索エラー: {}", e),
 ///     }
 ///
-///     // Bing検索を実行
-///     match www_search(EngineType::Bing, query.to_string()).await {
+///     // DuckDuckGo検索を実行
+///     match www_search(EngineType::DuckDuckGo, query.to_string()).await {
 ///         Ok(results) => {
 ///             println!("\nBing 検索結果:");
 ///             for result in results {
@@ -86,8 +82,6 @@ pub async fn www_search(engine: EngineType, query: String) -> Result<Vec<SearchD
     // 選択されたエンジンに基づいて適切な検索関数を呼び出す
     match engine {
         EngineType::Google => google::search_google(query).await,
-        EngineType::Bing => bing::search_bing(query).await,
         EngineType::DuckDuckGo => duckduckgo::search_duckduckgo(query).await,
     }
 }
-

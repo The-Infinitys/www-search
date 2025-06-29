@@ -1,11 +1,9 @@
 // src/search/google.rs
 
-use std::fs;
-
 use crate::SearchData; // lib.rsからSearchData構造体をインポート
 use reqwest; // HTTPクライアントのreqwestをインポート
 use scraper::{ElementRef, Html, Selector}; // HTMLパース用のscraperクレートをインポート
- // URL解析のためにurlクレートをインポート
+// URL解析のためにurlクレートをインポート
 use urlencoding; // URLエンコーディングのためにurlencodingをインポート
 
 /// Google検索を実行し、生のHTMLコンテンツを取得し、それを指定された基準でパースします。
@@ -32,7 +30,8 @@ pub async fn search_google(query: String) -> Result<Vec<SearchData>, String> {
     let client = match reqwest::ClientBuilder::new()
         .cookie_store(true)
         .user_agent("w3m (w3m/0.5.3+git20230121)")
-        .build() {
+        .build()
+    {
         Ok(c) => c,
         Err(e) => return Err(format!("Failed to build reqwest client: {}", e)),
     };
@@ -43,15 +42,6 @@ pub async fn search_google(query: String) -> Result<Vec<SearchData>, String> {
             if response.status().as_u16().to_string().starts_with("2") {
                 match response.text().await {
                     Ok(html) => {
-                        println!("Successfully fetched HTML from Google (first 500 chars):");
-                        println!("{}", &html[0..std::cmp::min(html.len(), 500)]); // HTMLの最初の部分を表示
-                        println!("...");
-                        // 取得したHTMLをdata.htmlファイルに書き込み
-                        if let Err(e) = fs::write("data.html", &html) {
-                            eprintln!("Failed to write HTML to data.html: {}", e);
-                        }
-
-
                         // 取得したHTMLをパースし、検索データを抽出
                         let results = parse_data(html);
                         Ok(results)
@@ -94,11 +84,10 @@ fn parse_data(html_str: String) -> Vec<SearchData> {
     let document = Html::parse_document(&html_str);
     let mut search_results = Vec::new();
 
-    // body > div > div > div をルートとしてループ
     let root_selector = match Selector::parse("body > div > div > div > div > div > div") {
         Ok(selector) => selector,
         Err(_) => {
-            eprintln!("Error parsing selector 'body > div > div > div'. Returning empty results.");
+            eprintln!("Error parsing selector. Returning empty results.");
             return Vec::new();
         }
     };
@@ -123,7 +112,10 @@ fn parse_data(html_str: String) -> Vec<SearchData> {
         }
         // タイトル: a要素の最初のspan子要素のテキスト
         let span_selector = Selector::parse("span").unwrap();
-        let title = a_element.select(&span_selector).next().map(|s| s.text().collect::<String>());
+        let title = a_element
+            .select(&span_selector)
+            .next()
+            .map(|s| s.text().collect::<String>());
         // 説明: a要素の親→親のtable要素を探し、行ごとに改行で結合
         let mut description: Option<String> = None;
         if let Some(parent1) = a_element.parent().and_then(ElementRef::wrap) {
@@ -144,7 +136,8 @@ fn parse_data(html_str: String) -> Vec<SearchData> {
                         description = Some(lines.join("\n"));
                     } else {
                         // trがなければtable全体のテキスト
-                        let table_text = table.text().collect::<Vec<_>>().join("").trim().to_string();
+                        let table_text =
+                            table.text().collect::<Vec<_>>().join("").trim().to_string();
                         if !table_text.is_empty() {
                             description = Some(table_text);
                         }
