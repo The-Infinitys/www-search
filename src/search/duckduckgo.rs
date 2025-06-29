@@ -65,8 +65,6 @@ pub async fn search_duckduckgo(query: String) -> Result<Vec<SearchData>, String>
             } else {
                 abs
             }
-        } else if href.starts_with("http://") || href.starts_with("https://") {
-            href.to_string()
         } else {
             href.to_string()
         };
