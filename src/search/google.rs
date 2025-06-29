@@ -69,38 +69,6 @@ pub async fn search_google(query: String) -> Result<Vec<SearchData>, String> {
     }
 }
 
-/// ElementRefの子ノードを再帰的にトラバースし、テキストコンテンツを収集します。
-/// `<em>` タグはMarkdownの `*テキスト*` 形式に変換されます。
-///
-/// # Arguments
-///
-/// * `element` - テキストコンテンツを抽出する対象の`ElementRef`。
-///
-/// # Returns
-///
-/// `String`: 変換されたテキストコンテンツ。
-fn get_text_with_markdown_em(element: &ElementRef) -> String {
-    let mut result = String::new();
-    for child in element.children() {
-        if let Some(text_node) = child.value().as_text() {
-            // テキストノードの場合、そのテキストを追加
-            result.push_str(text_node.trim());
-        } else if let Some(child_element) = ElementRef::wrap(child) {
-            // 要素ノードの場合
-            if child_element.value().name() == "em" {
-                // <em> タグの場合、Markdownの * を追加し、子を再帰的に処理
-                result.push('*');
-                result.push_str(&get_text_with_markdown_em(&child_element));
-                result.push('*');
-            } else {
-                // その他の要素の場合、その子を再帰的に処理（タグ自体は含めない）
-                result.push_str(&get_text_with_markdown_em(&child_element));
-            }
-        }
-    }
-    result
-}
-
 /// Google検索結果の生のHTML文字列を `SearchData` のベクターにパースします。
 ///
 /// この関数は、以下の指定された基準に基づいてタイトル、URL、説明を抽出します。
