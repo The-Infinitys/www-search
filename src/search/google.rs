@@ -57,6 +57,57 @@ pub async fn search_google(query: String) -> Result<Vec<SearchData>, String> {
     }
 }
 
+/// Google検索を実行し、生のHTMLコンテンツを取得し、それを指定された基準でパースします。
+///
+/// # Arguments
+///
+/// * `query` - 検索クエリ文字列。
+///
+/// # Returns
+///
+/// `Result<Vec<SearchData>, String>`:
+/// - 成功した場合: 検索結果のリスト (`Vec<SearchData>`)。
+/// - 失敗した場合: エラーメッセージ文字列。
+pub fn search_google_sync(query: String) -> Result<Vec<SearchData>, String> {
+    // Google検索のURLを構築
+    let url = format!(
+        "https://www.google.com/search?q={}",
+        urlencoding::encode(&query)
+    );
+
+    // reqwest::Clientを使用し、クッキーとリダイレクトを有効化
+    let client = match reqwest::blocking::ClientBuilder::new()
+        .cookie_store(true)
+        .user_agent("w3m (w3m/0.5.3+git20230121)")
+        .build()
+    {
+        Ok(c) => c,
+        Err(e) => return Err(format!("Failed to build reqwest client: {}", e)),
+    };
+
+    // クライアントでGETリクエストを送信
+    match client.get(&url).send() {
+        Ok(response) => {
+            if response.status().as_u16().to_string().starts_with("2") {
+                match response.text() {
+                    Ok(html) => {
+                        // 取得したHTMLをパースし、検索データを抽出
+                        let results = parse_data(html);
+                        Ok(results)
+                    }
+                    Err(e) => Err(format!("Failed to get text from Google response: {}", e)),
+                }
+            } else {
+                Err(format!(
+                    "Google search request failed with status: {}",
+                    response.status()
+                ))
+            }
+        }
+        Err(e) => Err(format!("Failed to send request to Google: {}", e)),
+    }
+}
+
 /// Google検索結果の生のHTML文字列を `SearchData` のベクターにパースします。
 ///
 /// この関数は、以下の指定された基準に基づいてタイトル、URL、説明を抽出します。
@@ -148,7 +199,7 @@ fn parse_data(html_str: String) -> Vec<SearchData> {
             search_results.push(SearchData {
                 title: t,
                 url: u,
-                description: description,
+                description,
             });
         }
     }

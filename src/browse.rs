@@ -1,4 +1,3 @@
-use reqwest;
 use scraper::{Html, Selector};
 
 /// 指定したURLのWebページ本文を取得し、Markdown形式で返す関数
@@ -50,6 +49,7 @@ pub async fn fetch_and_markdown(url: &str) -> Result<String, String> {
     Err("No readable content found".to_string())
 }
 
+#[allow(dead_code)]
 /// 指定したURLのWebページ本文を取得し、Markdown形式で返す関数
 pub fn fetch_and_markdown_sync(url: &str) -> Result<String, String> {
     let html = match reqwest::blocking::get(url) {

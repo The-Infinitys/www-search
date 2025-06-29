@@ -85,3 +85,10 @@ pub async fn www_search(engine: EngineType, query: String) -> Result<Vec<SearchD
         EngineType::DuckDuckGo => duckduckgo::search_duckduckgo(query).await,
     }
 }
+pub fn www_search_sync(engine: EngineType, query: String) -> Result<Vec<SearchData>, String> {
+    // 選択されたエンジンに基づいて適切な検索関数を呼び出す
+    match engine {
+        EngineType::Google => google::search_google_sync(query),
+        EngineType::DuckDuckGo => duckduckgo::search_duckduckgo_sync(query),
+    }
+}
