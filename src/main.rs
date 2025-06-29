@@ -9,7 +9,7 @@ use www_search::{www_search, EngineType};
 /// この関数は、`www_search`関数を使用してGoogleとBingの検索を実行し、結果を出力します。
 #[tokio::main]
 async fn main() {
-    let query = "Rustとは";
+    let query = "アンサイクロペディアとは";
 
     println!("--- WWW Search Library Example ---");
 
