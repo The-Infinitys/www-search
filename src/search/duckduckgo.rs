@@ -2,7 +2,6 @@
 
 use reqwest;
 use scraper::{Html, Selector};
-use std::fs;
 use std::str::FromStr;
 
 use crate::SearchData; // lib.rsからSearchData構造体をインポート
@@ -38,13 +37,6 @@ pub async fn search_duckduckgo(query: String) -> Result<Vec<SearchData>, String>
         },
         Err(e) => return Err(format!("Failed to send request to DuckDuckGo: {}", e)),
     };
-    println!("Successfully fetched HTML from DuckDuckGo (first 500 chars):");
-    println!("{}", &html[0..std::cmp::min(html.len(), 500)]); // HTMLの最初の部分を表示
-    println!("...");
-    // 取得したHTMLをdata.htmlファイルに書き込み
-    if let Err(e) = fs::write("data.html", &html) {
-        eprintln!("Failed to write HTML to data.html: {}", e);
-    }
     // HTMLパース
     let document = Html::parse_document(&html);
     let mut results = Vec::new();

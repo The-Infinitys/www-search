@@ -22,7 +22,7 @@ async fn main() {
         s.trim().parse().ok().unwrap()
     };
 
-    println!("--- WWW Search Library Example ---");
+    println!("--- WWW Search Library ---");
 
     // Google検索を実行
     println!("\nSearching with Google for: '{}'", query);
@@ -62,5 +62,4 @@ async fn main() {
         Err(e) => eprintln!("Error during DuckDuckGo search: {}", e),
     }
 
-    println!("\n--- End of Example ---");
 }

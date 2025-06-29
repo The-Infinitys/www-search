@@ -146,11 +146,11 @@ fn parse_data(html_str: String) -> Vec<SearchData> {
             }
         }
         // URLとタイトルが取得できた場合、結果に追加
-        if let (Some(t), Some(u)) = (title, url) {
+        if let (Some(t), Some(u), Some(description)) = (title, url, description) {
             search_results.push(SearchData {
                 title: t,
                 url: u,
-                description: description.unwrap_or_default(),
+                description: description,
             });
         }
     }
