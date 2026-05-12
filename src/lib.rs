@@ -9,12 +9,14 @@ pub mod browse;
 pub mod search;
 use crate::search::{duckduckgo, google};
 
+use serde::{Deserialize, Serialize};
+
 /// 検索エンジンの種類を定義するEnum
 ///
 /// - `Google`: Google検索 (デフォルト)
-/// - `Bing`: Bing検索
 /// - `DuckDuckGo`: DuckDuckGo検索
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum EngineType {
     #[default]
     Google, // default
@@ -24,9 +26,9 @@ pub enum EngineType {
 /// 検索結果のデータを保持する構造体
 ///
 /// - `title`: 検索結果のタイトル
-/// - `url`: 検索結果のURL
+/// - `url`: 検索結果의 URL
 /// - `description`: 検索結果の概要 (オプション)
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchData {
     pub title: String,       // 必須
     pub url: String,         // 必須

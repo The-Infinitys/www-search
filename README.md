@@ -1,61 +1,86 @@
 # www-search
 
-Rust製のWeb検索クライアント・CLIツールです。GoogleやDuckDuckGoなどの検索エンジンから検索結果を取得し、構造化データやWebページ本文（Markdown形式）として利用できます。
+`www-search` is a Rust-based Web Search client and [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server. It allows you to fetch search results from engines like Google and DuckDuckGo and retrieve web page content in Markdown format.
 
-## 特徴
-- Google・DuckDuckGoの検索結果取得に対応
-- HTMLパースによる柔軟なデータ抽出
-- DuckDuckGoは非同期・同期両対応
-- CLIからエンジン選択・検索・ページ閲覧（Markdown出力）が可能
-- Rust標準の型で結果を返却
+## Features
+- **Search Engines**: Supports Google and DuckDuckGo search.
+- **MCP Support**: Can be used as an MCP server with AI clients like Claude Desktop.
+- **Markdown Conversion**: Fetches web page content and converts it to readable Markdown.
+- **Flexible Data Extraction**: Uses HTML parsing for data extraction without requiring official APIs.
+- **Async/Sync Support**: Provides both asynchronous and synchronous interfaces for integration.
 
-## 使い方
+## MCP Server Setup
 
-### 1. 依存関係
-Cargo.toml:
+To use `www-search` as an MCP server with Claude Desktop:
+
+1. **Build the project**:
+   ```bash
+   cargo build --release
+   ```
+
+2. **Configure Claude Desktop**:
+   Add the following to your `claude_desktop_config.json` (usually located at `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
+
+   ```json
+   {
+     "mcpServers": {
+       "www-search": {
+         "command": "/path/to/www-search/target/release/www-search"
+       }
+     }
+   }
+   ```
+   *Replace `/path/to/www-search` with the actual absolute path to the project.*
+
+3. **Restart Claude Desktop**.
+
+### Available Tools
+- `web_search`: Search the web using Google or DuckDuckGo.
+  - Arguments: `query` (string), `engine` (optional: "google", "duckduckgo").
+- `fetch_page`: Fetch the content of a web page and convert it to Markdown.
+  - Arguments: `url` (string).
+
+## Library Usage
+
+Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
 www-search = { path = "./www-search" }
 ```
 
-### 2. CLIの例
-```sh
-# Google検索（デフォルト）
-cargo run -- "Rustとは"
-
-# DuckDuckGoで検索
-your_binary --engine duckduckgo "Rustとは"
-
-# 検索結果から番号を選んでWebページ本文をMarkdownで表示
-your_binary --engine google "Rust"  # → 検索結果一覧から番号入力
-
-# URLを直接Markdownで閲覧
-your_binary --browse https://example.com
-```
-
-### 3. ライブラリとしての利用例
+### Search Example
 ```rust
-use www_search::{search_google, search_duckduckgo, search_duckduckgo_sync, SearchData};
+use www_search::{www_search, EngineType, SearchData};
 
 #[tokio::main]
 async fn main() {
-    let query = "Rustとは".to_string();
-    // Google検索（非同期）
-    let google_results = search_google(query.clone()).await.unwrap();
-    // DuckDuckGo検索（非同期）
-    let ddg_results = search_duckduckgo(query.clone()).await.unwrap();
-    // DuckDuckGo検索（同期）
-    let ddg_results_sync = search_duckduckgo_sync(query).unwrap();
+    let query = "Rust programming".to_string();
+    
+    // Search using Google
+    let results = www_search(EngineType::Google, query).await.unwrap();
+    
+    for result in results {
+        println!("Title: {}", result.title);
+        println!("URL: {}", result.url);
+        println!("Description: {}", result.description);
+        println!("---");
+    }
 }
 ```
 
-### 4. Webページ本文のMarkdown取得
+### Fetch Page Example
 ```rust
-let md = browse::fetch_and_markdown("https://example.com").await.unwrap();
-println!("{}", md);
+use www_search::browse;
+
+#[tokio::main]
+async fn main() {
+    let url = "https://example.com";
+    let markdown = browse::fetch_and_markdown(url).await.unwrap();
+    println!("{}", markdown);
+}
 ```
 
-## 検索結果データ構造
+## Data Structure
 ```rust
 pub struct SearchData {
     pub title: String,
@@ -64,7 +89,7 @@ pub struct SearchData {
 }
 ```
 
-## 注意事項
-- Google等のHTML構造は頻繁に変化するため、パースロジックが動作しなくなる場合があります。
-- 本ライブラリは公式APIではなく、HTMLスクレイピングによるものです。
-- 利用は自己責任でお願いします。
+## Important Notes
+- **Scraping Based**: This library relies on HTML scraping. Since search engine HTML structures change frequently, the parsing logic might break.
+- **No Official API**: This is not an official API client. Use it responsibly and at your own risk.
+- **TLS**: Uses `rustls-tls` to avoid native OpenSSL dependencies.
